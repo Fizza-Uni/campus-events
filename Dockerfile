@@ -1,17 +1,12 @@
-# Use a lightweight Nginx image as base
+FROM node:25-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+
+RUN npx parcel build "/app/src/index.html" --dist-dir "./dist" --public-url "./"
 FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Set working directory
-WORKDIR /usr/share/nginx/html
-
-# Remove default Nginx page
-RUN rm -rf ./*
-
-# Copy the built website files from the dist folder into the container
-COPY dist/ .
-
-# Expose port 80 to access the container from a browser
 EXPOSE 80
-
-# Start Nginx automatically when the container starts
 CMD ["nginx", "-g", "daemon off;"]
