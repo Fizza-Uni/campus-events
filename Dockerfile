@@ -1,23 +1,12 @@
-# Use Node.js official image
-FROM node:20-alpine
-
-# Set working directory
+FROM node:25-alpine AS builder
 WORKDIR /app
-
-# Copy package.json and package-lock.json (if exists)
 COPY package*.json ./
-
-# Install Parcel and a simple static server globally
-RUN npm install -g parcel http-server
-
-# Copy all project files
+RUN npm install
 COPY . .
 
-# Build events.html into dist/
-RUN parcel build src/events.html --dist-dir dist
+RUN npx parcel build "/app/src/index.html" --dist-dir "./dist" --public-url "./"
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port for the container
-EXPOSE 8080
-
-# Serve the dist folder using http-server
-CMD ["http-server", "dist", "-p", "8080"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
